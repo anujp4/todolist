@@ -1,7 +1,9 @@
 # Getting Started with TodoApp
-create the app and run locally also to functions to work 
-you have also run WebApi https://github.com/anujp4/DecisionsTodoWebAPI 
-for database user has to update-database in WebAPI using visual studio
+1.Clone and run the Web API from this repository: DecisionsTodoWebAPI
+
+2.In Visual Studio, open the WebAPI project and run the Update-Database command in the Package Manager Console to apply the database migrations.
+
+3.Once the API is running, start the main application to ensure all functions work properly
 
 
 
