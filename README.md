@@ -1,3 +1,11 @@
+# Getting Started with TodoApp
+create the app and run locally also to functions to work 
+you have also run WebApi https://github.com/anujp4/DecisionsTodoWebAPI 
+for database user has to update-database in WebAPI using visual studio
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
