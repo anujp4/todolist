@@ -33,6 +33,10 @@ class App extends Component
   }
 
   async addClick() {
+    if(!document.getElementById("newNotes").value) {
+      alert("Please enter a note description.");
+      return;
+    }
   const newNotes = document.getElementById("newNotes").value;
   const data = {
     description: newNotes,
