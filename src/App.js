@@ -10,7 +10,6 @@ class App extends Component
     }
   }
   OriginalNotes = [];
-  LastProfile = "";
 
   componentDidMount(){
     try {
@@ -21,15 +20,16 @@ class App extends Component
   }
   API_URL = "https://localhost:7242/";
   async refreshNotes(){
-    try {
+   
     fetch(this.API_URL+ "api/todo/").then(response=>response.json())
     .then(data=>{
       this.OriginalNotes = data; // Store the original notes
       this.setState({notes:data});
-    })} catch (error) {
-      console.error("Error fetching notes:", error);
+    }).catch(err => {
+       console.error("Error fetching notes:", err);
       alert("Failed to fetch notes.");
-    }
+
+    });
   }
 
   async addClick() {
@@ -37,9 +37,9 @@ class App extends Component
       alert("Please enter a note description.");
       return;
     }
-  const newNotes = document.getElementById("newNotes").value;
+
   const data = {
-    description: newNotes,
+    description: document.getElementById("newNotes").value,
     priority: document.getElementById("priority").value,
     profile: document.getElementById("profile").value
   };
@@ -51,38 +51,74 @@ class App extends Component
     },
     body: JSON.stringify(data)
   })
-  .then(res => console.log(res))
-    .then(res => res.json())
     .then(result => {
       alert(result.message || "Note added!");
-     // this.refreshNotes();
+      this.refreshNotes();
+      document.getElementById("newNotes").value = "";
+    })
+    .catch(err => {
+      console.error(err);
+      this.refreshPage();
+      alert("Failed to add note.");     
+    });
+}
+  async updateClick(id,existingDescription, existingPriority, existingProfile) {
+
+  document.getElementById("newNotes").value = existingDescription || document.getElementById("newNotes").value;
+  document.getElementById("priority").value = existingPriority || document.getElementById("priority").value;
+  document.getElementById("profile").value = existingProfile || document.getElementById("profile").value;
+  
+      if(!document.getElementById("newNotes").value) {
+      alert("Please enter a note description.");
+      return;
+    }
+}
+async submitClick(id) {
+  if(id) {  const data = {
+    description:  document.getElementById("newNotes").value,
+    priority: document.getElementById("priority").value,
+    profile: document.getElementById("profile").value
+  };
+   const response = await fetch(this.API_URL + "api/todo/" + id, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  })
+    .then(result => {
+      alert(result.message || "Note updated!");
+      this.refreshNotes();
       document.getElementById("newNotes").value = "";
     })
     .catch(err => {
       console.error(err);
       this.refreshPage();
       //alert("Failed to add note.");
-      
+
     });
+  }else{
+    this.addClick();
+  }
 }
   async deleteClick(id){
     try{
       const response = await fetch(this.API_URL+ "api/todo/"+id,{
         method: "DELETE",
-      });
-          this.refreshPage();
-      const result = await response.json();
-    
-      this.refreshPage();
-      alert(result);
+      })  .then(result => {
+      alert(result.message || "Note deleted!");
+
+      this.refreshNotes();
+    }).then(result => {
+      console.log(this.response);
+    });
+      //alert(result);
     } catch (error) {
        console.error("Error deleting note:", error);
-       this.refreshPage();
      
     }
   }
 filterByProfile(profile) {
-  this.LastProfile = profile;
   const { notes } = this.state;
   if (!profile) {
     this.setState({ notes: this.OriginalNotes }); // Reset to all notes if query is empty
@@ -105,7 +141,6 @@ searchNotes(query) {
   async refreshPage() {
 
     window.location.reload();
-    this.filterByProfile(this.LastProfile);
   }
   render() {
   const{notes}=this.state;
@@ -126,7 +161,7 @@ searchNotes(query) {
     <option value="personal">Personal</option>
     <option value="work">Work</option>
   </select>
-   <button onClick={()=>this.addClick()}>Add note</button>
+   <button onClick={()=>this.addClick()}>add note</button>
    <br />
    <button onClick={()=>this.filterByProfile("")}>View All</button> &nbsp;&nbsp;
    <button onClick={()=>this.filterByProfile("personal")}>View Personal</button> &nbsp;&nbsp;
@@ -141,7 +176,9 @@ searchNotes(query) {
           <label>Mark done:</label>
            <input type="checkbox" id="markdone" />
           <b>* {note.description}</b> - {note.priority} - {note.profile}
-          <button onClick={()=>this.deleteClick(note.id)}>del note</button>
+          <button onClick={() => this.updateClick(note.id, note.description, note.priority, note.profile)}>edit</button>
+          <button onClick={() => this.submitClick(note.id)}>submit</button>
+          <button onClick={() => this.deleteClick(note.id)}>del note</button>
         </p>
       </div>
    )}
