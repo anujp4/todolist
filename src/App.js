@@ -9,19 +9,29 @@ class App extends Component
       notes:[]
     }
   }
+  OriginalNotes = [];
+  LastProfile = "";
+
   componentDidMount(){
-    this.refreshNotes();
+    try {
+      this.refreshNotes();
+    } catch (error) {
+      console.error("Error in componentDidMount:", error);
+    }
   }
   API_URL = "https://localhost:7242/";
   async refreshNotes(){
+    try {
     fetch(this.API_URL+ "api/todo/").then(response=>response.json())
     .then(data=>{
+      this.OriginalNotes = data; // Store the original notes
       this.setState({notes:data});
-    })
+    })} catch (error) {
+      console.error("Error fetching notes:", error);
+      alert("Failed to fetch notes.");
+    }
   }
-  async refreshPage() {
-    window.location.reload();
-  }
+
   async addClick() {
   const newNotes = document.getElementById("newNotes").value;
   const data = {
@@ -45,8 +55,10 @@ class App extends Component
       document.getElementById("newNotes").value = "";
     })
     .catch(err => {
-      alert("Failed to add note.");
       console.error(err);
+      this.refreshPage();
+      //alert("Failed to add note.");
+      
     });
 }
   async deleteClick(id){
@@ -54,40 +66,80 @@ class App extends Component
       const response = await fetch(this.API_URL+ "api/todo/"+id,{
         method: "DELETE",
       });
+          this.refreshPage();
       const result = await response.json();
-      console.log(result);
+    
       this.refreshPage();
       alert(result);
-     this.refreshPage();
     } catch (error) {
-      console.error("Error deleting note:", error);
+       console.error("Error deleting note:", error);
+       this.refreshPage();
+     
     }
+  }
+filterByProfile(profile) {
+  this.LastProfile = profile;
+  const { notes } = this.state;
+  if (!profile) {
+    this.setState({ notes: this.OriginalNotes }); // Reset to all notes if query is empty
+  } else {
+    const filteredNotes = this.OriginalNotes.filter(note => note.profile === profile);
+    this.setState({ notes: filteredNotes });
+  }
+}
+searchNotes(query) {
+  const { notes } = this.state;
+  if (!query) {
+    this.setState({notes: this.OriginalNotes}); // Reset to all notes if query is empty
+  }else{
+   const filteredNotesbySearch = this.OriginalNotes.filter(note =>
+    note.description.toLowerCase().includes(query.toLowerCase()));
+     this.setState({ notes: filteredNotesbySearch });
+
+}
+}
+  async refreshPage() {
+
+    window.location.reload();
+    this.filterByProfile(this.LastProfile);
   }
   render() {
   const{notes}=this.state;
   return (
     <div className="App">
    <h2> Todo List</h2>
+
        <label>Description:</label>
-   <input id = "newNotes"/>&nbsp;
+   <input required id = "newNotes"/>&nbsp;
     <label >priority:</label>
       <select name="priority" id="priority">
     <option value="low">Low</option>
     <option value="medium">Medium</option>
     <option value="high">High</option>
   </select>
-      <label for="profile">profile:</label>
+      <label>profile:</label>
       <select name="profile" id="profile">
     <option value="personal">Personal</option>
     <option value="work">Work</option>
   </select>
    <button onClick={()=>this.addClick()}>Add note</button>
+   <br />
+   <button onClick={()=>this.filterByProfile("")}>View All</button> &nbsp;&nbsp;
+   <button onClick={()=>this.filterByProfile("personal")}>View Personal</button> &nbsp;&nbsp;
+    <button onClick={()=>this.filterByProfile("work")}>View Work</button>
+    <br />
+
+       <label>Search:</label>
+   <input id = "searchNotes" onChange={(e) => this.searchNotes(e.target.value)} />&nbsp;
    {notes.map((note) =>
-    <p key={notes.id}>
-      <b>* {note.description}</b> - {note.priority} - {note.profile}
-         <button onClick={()=>this.deleteClick(note.id)}>del note</button>
-      </p>
-    
+      <div key={note.id}>
+        <p>
+          <label>Mark done:</label>
+           <input type="checkbox" id="markdone" />
+          <b>* {note.description}</b> - {note.priority} - {note.profile}
+          <button onClick={()=>this.deleteClick(note.id)}>del note</button>
+        </p>
+      </div>
    )}
     </div>
   );
